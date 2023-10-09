@@ -1,0 +1,16 @@
+{
+  "name": "bt-arcaea-site-poller",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build": "rollup -c rollup.config.js"
+  },
+  "keywords": [],
+  "author": "j1nxie",
+  "license": "MIT",
+  "dependencies": {
+    "@rollup/plugin-terser": "^0.4.4",
+    "rollup": "^4.0.2"
+  }
+}
