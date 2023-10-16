@@ -245,11 +245,11 @@ async function executeRecentImport(data) {
         timeAchieved: time_played,
     }
 
-    // if (time_played > latestScoreTimestamp) {
-    latestScoreTimestamp = time_played;
-    console.log(bt_score);
-    submitScore({ scores: [bt_score] });
-    // }
+    if (time_played > latestScoreTimestamp) {
+        latestScoreTimestamp = time_played;
+        console.log(bt_score);
+        submitScore({ scores: [bt_score] });
+    }
 }
 
 console.log("running");
