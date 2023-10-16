@@ -130,6 +130,14 @@ async function startPolling() {
     }
 
     while (polling) {
+        let currentTime = Date.now();
+        if (currentTime - latestScoreTimestamp === 15 * 60 * 1000) {
+            updateStatus("Script timed out. Stopped polling.")
+            pollButton.onclick = startPolling;
+            pollButton.innerText = "Start polling";
+            polling = false;
+            break;
+        }
         const req = (await (await fetch("https://webapi.lowiro.com/webapi/user/me")).json()).value;
         console.log(req);
         await executeRecentImport(req.recent_score[0]);
