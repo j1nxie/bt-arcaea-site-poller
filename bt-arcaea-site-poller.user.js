@@ -12,7 +12,7 @@
 
 console.log("BTIMPORT");
 
-const BT_SELECTED_CONFIG = "prod";
+const BT_SELECTED_CONFIG = "staging"
 const BT_CONFIGS = {
     "staging": {
         baseUrl: "https://staging.bokutachi.xyz",
