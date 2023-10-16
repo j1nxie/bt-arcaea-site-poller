@@ -232,7 +232,7 @@ async function pollStatus(url, scores) {
             - Time played: ${new Date(score.timeAchieved).toString()}
             `;
         } else {
-            message = `${body.description}` + ` ${body.body.import.scoreIDs.length} scores.`;
+            message = `${body.description} ${body.body.import.scoreIDs.length} scores.`;
         }
 
         if (body.body.import.errors.length > 0) {
