@@ -254,26 +254,27 @@ async function executeRecentImport(data) {
 
 console.log("running");
 
-const observedNode = document.getElementById("app");
-const config = { childList: true };
+let injectedElement = document.querySelector(".banner.castle-banner");
+if (injectedElement === null) {
+    const observedNode = document.getElementById("app");
+    const config = { childList: true };
 
-function observerCallback(mutationList, observer) {
-    observer.disconnect();
-    for (const mutation of mutationList) {
-        if (mutation.type === "childList") {
-            let injectedElement = document.querySelector(".banner.castle-banner");
-
-            if (injectedElement !== null) {
-                switch (location.pathname) {
-                    case "/en/profile/":
-                    case "/jp/profile/":
-                        addNav();
-                        break;
+    function observerCallback(mutationList, observer) {
+        observer.disconnect();
+        for (const mutation of mutationList) {
+            if (mutation.type === "childList") {
+                if (injectedElement !== null) {
+                    switch (location.pathname) {
+                        case "/en/profile/":
+                        case "/jp/profile/":
+                            addNav();
+                            break;
+                    }
                 }
             }
         }
     }
-}
 
-const observer = new MutationObserver(observerCallback);
-observer.observe(observedNode, config);
+    const observer = new MutationObserver(observerCallback);
+    observer.observe(observedNode, config);
+}
