@@ -277,4 +277,11 @@ if (injectedElement === null) {
 
     const observer = new MutationObserver(observerCallback);
     observer.observe(observedNode, config);
+} else {
+    switch (location.pathname) {
+        case "/en/profile/":
+        case "/jp/profile/":
+            addNav();
+            break;
+    }
 }
