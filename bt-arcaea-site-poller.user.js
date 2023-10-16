@@ -112,6 +112,14 @@ function addNav() {
         pollButton.onclick = startPolling;
         pollButton.innerText = "- Start polling";
         navHtml.append(pollButton);
+
+        navHtml.append(document.createElement("br"));
+
+        const b30Button = document.createElement("a");
+        b30Button.id = "bt-b30-button";
+        b30Button.onclick = executeB30Import;
+        b30Button.innerText = "- (REQUIRES ARCAEA ONLINE SUBSCRIPTION) Import best 30 scores";
+        navHtml.append(b30Button);
     }
 
     navHtml.id = "bt-import";
@@ -187,10 +195,10 @@ async function submitScore(options) {
     const json = await (await req).json();
     const pollUrl = json.body.url;
 
-    pollStatus(pollUrl, scores[0]);
+    pollStatus(pollUrl, scores);
 }
 
-async function pollStatus(url, score) {
+async function pollStatus(url, scores) {
     const req = await fetch(url, {
         method: "GET",
         headers: {
@@ -213,14 +221,19 @@ async function pollStatus(url, score) {
 
     if (body.body.importStatus === "completed") {
         console.log(body.body);
-        // let message = body.description + ` ${body.body.import.scoreIDs.length} scores`;
-        let message = `${body.description}
-        - Song ID: ${score.identifier}
-        - Score: ${score.score}
-        - Lamp: ${score.lamp}
-        - Judgements: ${score.judgements.pure}-${score.judgements.far}-${score.judgements.lost}
-        - Time played: ${new Date(score.timeAchieved).toString()}
-        `;
+        let message;
+        if (scores.length === 1) {
+            let score = scores[0];
+            message = `${body.description}
+            - Song ID: ${score.identifier}
+            - Score: ${score.score}
+            - Lamp: ${score.lamp}
+            - Judgements: ${score.judgements.pure}-${score.judgements.far}-${score.judgements.lost}
+            - Time played: ${new Date(score.timeAchieved).toString()}
+            `;
+        } else {
+            message = `${body.description}` + ` ${body.body.import.scoreIDs.length} scores.`;
+        }
 
         if (body.body.import.errors.length > 0) {
             message += `, ${body.body.import.errors.length} errors (see console log for details)`;
@@ -258,6 +271,31 @@ async function executeRecentImport(data) {
         console.log(bt_score);
         submitScore({ scores: [bt_score] });
     }
+}
+
+async function executeB30Import(data) {
+    console.log(data);
+    let scores = [];
+    for (const scoreData of data) {
+        const { song_id, difficulty, score, shiny_perfect_count, perfect_count, near_count, miss_count, clear_type, best_clear_type, health, time_played, modifier } = scoreData;
+        const bt_score = {
+            identifier: song_id,
+            matchType: "inGameStrID",
+            difficulty: DIFFICULTIES[difficulty],
+            score: score,
+            lamp: LAMPS[clear_type],
+            judgements: {
+                pure: perfect_count,
+                far: near_count,
+                lost: miss_count,
+            },
+            timeAchieved: time_played,
+        }
+
+        scores.push(bt_score);
+    }
+
+    submitScore({ scores });
 }
 
 console.log("running");
