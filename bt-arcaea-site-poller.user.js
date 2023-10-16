@@ -110,7 +110,7 @@ function addNav() {
         const pollButton = document.createElement("a");
         pollButton.id = "bt-poll-button";
         pollButton.onclick = startPolling;
-        pollButton.innerText = "Start polling";
+        pollButton.innerText = "- Start polling";
         navHtml.append(pollButton);
     }
 
@@ -121,7 +121,7 @@ function addNav() {
 async function startPolling() {
     polling = true;
     const pollButton = document.querySelector("#bt-poll-button");
-    pollButton.innerText = "Stop polling";
+    pollButton.innerText = "- Stop polling";
     pollButton.onclick = () => {
         updateStatus("Stopped polling.")
         pollButton.onclick = startPolling;
