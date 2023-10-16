@@ -271,6 +271,8 @@ if (injectedElement === null) {
         observer.disconnect();
         for (const mutation of mutationList) {
             if (mutation.type === "childList") {
+                injectedElement = document.querySelector(".banner.castle-banner");
+
                 if (injectedElement !== null) {
                     switch (location.pathname) {
                         case "/en/profile/":
