@@ -5,7 +5,7 @@ Poll for the latest score from Arcaea Online to import to Bokutachi.
 ## Features
 
 - [x] Poll for latest recent score
-- [ ] (REQUIRES ARCAEA ONLINE SUBSCRIPTION) Import best 30 scores potential-wise.
+- [x] (REQUIRES ARCAEA ONLINE SUBSCRIPTION) Import best 30 scores potential-wise.
 
 ## Installation
 ### With a userscript manager
@@ -23,3 +23,4 @@ Poll for the latest score from Arcaea Online to import to Bokutachi.
 2. Set up your API key following the instructions you see on the page.
 3. Click "Start polling" to start polling for your scores.
 4. Click "Stop polling" whenever you wish to stop polling for new recent scores. The script will automatically timeout after 15 minutes.
+5. (Optional, only if you have an Arcaea Online subscription) Click "Import best 30 scores" to import your best 30 potential-wise.
