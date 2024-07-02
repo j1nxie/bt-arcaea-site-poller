@@ -1,3 +1,4 @@
+/// <reference path="./arcaea.d.ts">
 // ==UserScript==
 // @name     bt-arcaea-site-poller
 // @version  1.0.0
@@ -12,22 +13,18 @@
 
 console.log("BTIMPORT");
 
-const BT_SELECTED_CONFIG = "staging"
-const BT_CONFIGS = {
-    "staging": {
-        baseUrl: "https://staging.bokutachi.xyz",
-        clientId: "CI13c6fecdc2525d4fd6ee9b6d0552eecb00cc3d9e"
-    },
-    "prod": {
-        baseUrl: "https://bokutachi.xyz",
-        clientId: "CI5d804b5eb97804476729fe30644878586b5e570d",
+const BT_SELECTED_CONFIG = /** @type {const} */("nazunacord");
+const BT_CONFIGS = /** @type {const} */({
+    "nazunacord": {
+        baseUrl: "https://tachi.beerpsi.cc",
+        clientId: "CI76714ce710c0a8f391154782c1dd2b3e6325a5be",
     }
-};
+});
 const BT_BASE_URL = BT_CONFIGS[BT_SELECTED_CONFIG].baseUrl;
 const BT_CLIENT_ID = BT_CONFIGS[BT_SELECTED_CONFIG].clientId;
 const API_KEY = "api-key";
-const DIFFICULTIES = ["Past", "Present", "Future", "Beyond"];
-const LAMPS = ["LOST", "CLEAR", "FULL RECALL", "PURE MEMORY", "EASY CLEAR", "HARD CLEAR"];
+const DIFFICULTIES = /** @type {const} */(["Past", "Present", "Future", "Beyond", "Eternal"]);
+const LAMPS = /** @type {const} */(["LOST", "CLEAR", "FULL RECALL", "PURE MEMORY", "EASY CLEAR", "HARD CLEAR"]);
 let latestScoreTimestamp = Date.now();
 let polling = false;
 
@@ -128,7 +125,9 @@ function addNav() {
 
 async function startPolling() {
     polling = true;
+    
     const pollButton = document.querySelector("#bt-poll-button");
+    
     pollButton.innerText = "- Stop polling";
     pollButton.onclick = () => {
         updateStatus("Stopped polling.")
@@ -139,16 +138,31 @@ async function startPolling() {
 
     while (polling) {
         let currentTime = Date.now();
+        
         if (currentTime - latestScoreTimestamp === 15 * 60 * 1000) {
             updateStatus("Script timed out. Stopped polling.")
             pollButton.onclick = startPolling;
-            pollButton.innerText = "Start polling";
+            pollButton.innerText = "- Start polling";
             polling = false;
             break;
         }
-        const req = (await (await fetch("https://webapi.lowiro.com/webapi/user/me")).json()).value;
-        console.log(req);
-        await executeRecentImport(req.recent_score[0]);
+        
+        /**
+         * @type {ArcaeaResponse<ProfileData>}
+         */
+        const resp = await fetch("https://webapi.lowiro.com/webapi/user/me").then((r) => r.json());
+        
+        console.log(resp);
+
+        if (!resp.success) {
+            updateStatus("Could not poll for most recent score. See the console for more details.");
+            pollButton.onclick = startPolling;
+            pollButton.innerText = "- Start polling";
+            polling = false;
+            break;
+        }
+        
+        await executeRecentImport(resp.value.recent_score[0]);
         await new Promise(r => setTimeout(r, 90000));
     }
 }
@@ -164,9 +178,22 @@ function updateStatus(message) {
     statusElem.innerText = message;
 }
 
+/**
+ * 
+ * @param {Omit<BatchManualImport, "meta">} options 
+ * @returns 
+ */
 async function submitScore(options) {
     const { scores = [] } = options;
 
+    if (scores.length === 0) {
+        updateStatus("Nothing to import.");
+        return;
+    }
+
+    /**
+     * @type {BatchManualImport}
+     */
     const body = {
         meta: {
             game: "arcaea",
@@ -174,11 +201,6 @@ async function submitScore(options) {
             service: "bt-arcaea-site-poller",
         },
         scores,
-    }
-
-    if (scores.length === 0) {
-        updateStatus("Nothing to import.");
-        return;
     }
 
     const req = fetch(`${BT_BASE_URL}/ir/direct-manual/import`, {
@@ -249,10 +271,18 @@ async function pollStatus(url, scores) {
     updateStatus(body.description);
 }
 
+/**
+ * 
+ * @param {RecentScore} data 
+ */
 async function executeRecentImport(data) {
     console.log(data);
-    const { song_id, difficulty, score, shiny_perfect_count, perfect_count, near_count, miss_count, clear_type, best_clear_type, health, time_played, modifier } = data;
-    const bt_score = {
+    
+    const { song_id, difficulty, score, shiny_perfect_count, perfect_count, near_count, miss_count, clear_type, time_played, health } = data;
+    /**
+     * @type {BatchManualScore}
+     */
+    const btScore = {
         identifier: song_id,
         matchType: "inGameStrID",
         difficulty: DIFFICULTIES[difficulty],
@@ -264,35 +294,59 @@ async function executeRecentImport(data) {
             lost: miss_count,
         },
         timeAchieved: time_played,
+        optional: {
+            shinyPure: shiny_perfect_count,
+            gauge: health,
+        }
     }
 
     if (time_played > latestScoreTimestamp) {
         latestScoreTimestamp = time_played;
-        console.log(bt_score);
-        submitScore({ scores: [bt_score] });
+        console.log(btScore);
+        submitScore({ scores: [btScore] });
     }
 }
 
 async function executeB30Import(data) {
-    console.log(data);
-    let scores = [];
-    for (const scoreData of data) {
-        const { song_id, difficulty, score, shiny_perfect_count, perfect_count, near_count, miss_count, clear_type, best_clear_type, health, time_played, modifier } = scoreData;
-        const bt_score = {
-            identifier: song_id,
-            matchType: "inGameStrID",
-            difficulty: DIFFICULTIES[difficulty],
-            score: score,
-            lamp: LAMPS[clear_type],
-            judgements: {
-                pure: perfect_count,
-                far: near_count,
-                lost: miss_count,
-            },
-            timeAchieved: time_played,
-        }
+    /**
+     * @type {ArcaeaResponse<RatedScores>}
+     */
+    const resp = await fetch("https://webapi.lowiro.com/webapi/score/rating/me").then((r) => r.json());
+    
+    console.log(resp);
 
-        scores.push(bt_score);
+    if (!resp.success) {
+        updateStatus(`Could not fetch best/recent rated scores: ${resp.error_code}`);
+        return;
+    }
+
+    /**
+     * @type {BatchManualScore[]}
+     */
+    const scores = [];
+    
+    for (const score of resp.value.best_rated_scores.concat(resp.value.recent_rated_scores)) {
+        /**
+         * @type {BatchManualScore}
+         */
+        const btScore = {
+            identifier: score.song_id,
+            matchType: "inGameStrID",
+            difficulty: DIFFICULTIES[score.difficulty],
+            score: score.score,
+            lamp: LAMPS[score.clear_type],
+            judgements: {
+                pure: score.perfect_count,
+                far: score.near_count,
+                lost: score.miss_count,
+            },
+            timeAchieved: score.time_played,
+            optional: {
+                shinyPure: score.shiny_perfect_count,
+            },
+        };
+
+        scores.push(btScore);
     }
 
     submitScore({ scores });
